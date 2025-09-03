@@ -11,7 +11,7 @@ module uart_transmitter
     input i_tx_dv, // verification bit for transmitter to recieve a byte that is to be transmitted
     input i_clk, 
     input [7:0]i_tx_Byte,
-    output   tx_active,
+    output   wire tx_active,
     output  reg tx_serial,
     output  reg tx_done,
 );  
@@ -20,14 +20,14 @@ parameter Idle=3'b000,
           Start=3'b001,
           Send=3'b010,
           Stop=3'b011;
-
+        //
 // define all regs and wires
 
 reg [2:0] r_sm_main=0; // the current state
-reg  [2:0] r_clk_count=0; // tracks the no of bits recieved
+reg  [$clog2(CLKs_Per_Bit):0] r_clk_count=0; // tracks the no of bits recieved
 reg [2:0] Bit_index=0;
 reg [7:0] r_tx_data=0; // datapath to track input to transmitter
-reg r_tx_done=0; // to display successfull transmisson of bits
+// reg r_tx_done=0; // to display successfull transmisson of bits used in cleanup state cases
 reg r_tx_active=0; // to show that the transmission has begin
 
 
@@ -85,9 +85,7 @@ begin [2:0]
             r_sm_main<=Stop;
             Bit_index<=0;
             end 
-
         end
-
     end
     Stop:
     begin
@@ -104,11 +102,17 @@ begin [2:0]
     r_sm_main<= Idle;
     end 
     end
+    // cleanup:
+    // begin
+    // r_tx_done<=1'b1;
+    // r_sm_main<=1'b1;
+    // end 
+    default: r_sm_main<=Idle;
     // the clean up state is not necessary as generally used
-    // we can instead use stop state. The clean up code will be commented for the viewer
-
+    // we can instead use stop state. The cleanup code will be commented for the viewer
     endcase
 end
-
+assign tx_active <=r_tx_active;
+// assign tx_done<=r_tx_done;
 
 endmodule
