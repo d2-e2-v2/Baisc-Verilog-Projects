@@ -22,17 +22,16 @@ reg [$clog2(CLKs_Per_Bit):0]     r_Clock_Count = 0;
   reg [7:0]     r_Rx_Byte     = 0;
   reg           r_Rx_DV       = 0;
   reg [2:0]     r_SM_Main     = 0;
-
 always@(posedge i_clk) // this prevents the effects of metastability.
 begin
 r_rx_data_r <= i_rx_serial;
-i_rx_serial <=r_rx_data_r;
+r_rx_data<=r_rx_data_r;
 end
 
 // write the state transition logic
 always@(posedge i_clk)
 begin
-case(r_SM_Maine)
+case(r_SM_Main)
 Idle:
 begin
 r_Rx_DV <=1'b0;
@@ -42,7 +41,7 @@ r_Bit_Index <=0;
 if(r_rx_data==1'b0)
 r_SM_Main <= Start;
 else
- r_SM_Main <=s_Idle;
+ r_SM_Main <=Idle;
 end
 Start:
 begin
@@ -59,21 +58,22 @@ begin
     end 
     else
     begin
-    r_Clk_Count<=r_Clock_Count +1'b1;
+    r_Clock_Count<=r_Clock_Count +1'b1;
     end
+end
     // note: we are sampling in the middle of bits here.
     // this is reduce sampling metastable states
     Active:
     begin 
         // now each we sample after a full Clk_per_bit
-        if(r_clk_count<=Clk_per_bit-1)
+        if(r_Clock_Count<=CLKs_Per_Bit-1)
         begin
-            r_Clk_Count<=r_Clk_Count+1;
+            r_Clock_Count<=r_Clock_Count+1;
             r_SM_Main<= Active;
         end 
         else
         begin
-        o_rx_data[r_Bit_Index] <=r_rx_data; // give synchronised output 
+        r_Rx_Byte[r_Bit_Index] <=r_rx_data; // give synchronised output 
        r_SM_Main<=Active;
         end
         if(r_Bit_Index <7)
@@ -84,28 +84,27 @@ begin
         else
         begin
         r_Bit_Index <=0;
-        r_SM_main <= Stop;
+        r_SM_Main <= Stop;
         end 
     end 
     
     Stop: 
     begin
-        if(r_clk_count<=Clk_per_bit-1)
+        if(r_Clock_Count<=CLKs_Per_Bit-1)
         begin
-            r_Clk_Count<=r_Clk_Count+1;
+            r_Clock_Count<=r_Clock_Count+1;
             r_SM_Main<= Stop;
         end 
     else 
     begin
-        r_rx_Dv <=1'b1;
+          r_Rx_DV   <=1'b1;
         r_Clock_Count <=0;
         r_SM_Main <= Idle;
     end 
     end
-end 
 
  default :
-          r_SM_Main <= s_IDLE;
+          r_SM_Main <= Idle;
           
 endcase
 end

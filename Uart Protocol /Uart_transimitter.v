@@ -3,17 +3,17 @@
  // the tranismission is can be done between any two transmitter 
  // or recievers
 
-module uart_transmitter 
+module uart_transmitter  #(parameter CLKs_Per_Bit=87)
 // a basic protocol used in old serial communication
-#(parameter CLKs_Per_Bit) // baud rate is used to set bits per cycle of 
+ // baud rate is used to set bits per cycle of 
 // of the input clk connected to the transmitter
 (
     input i_tx_dv, // verification bit for transmitter to recieve a byte that is to be transmitted
     input i_clk, 
     input [7:0]i_tx_Byte,
-    output   wire tx_active,
+    output   tx_active,
     output  reg tx_serial,
-    output  reg tx_done,
+    output  reg tx_done
 );  
 // Design the fsm
 parameter Idle=3'b000,
@@ -31,8 +31,8 @@ reg [7:0] r_tx_data=0; // datapath to track input to transmitter
 reg r_tx_active=0; // to show that the transmission has begin
 
 
-always@(posedge i_clock)// next_state_logic
-begin [2:0] 
+always@(posedge i_clk)// next_state_logic
+begin 
     case(r_sm_main)
     Idle:
     begin
@@ -112,7 +112,7 @@ begin [2:0]
     // we can instead use stop state. The cleanup code will be commented for the viewer
     endcase
 end
-assign tx_active <=r_tx_active;
+assign tx_active =r_tx_active;
 // assign tx_done<=r_tx_done;
 
 endmodule
